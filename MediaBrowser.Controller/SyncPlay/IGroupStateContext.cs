@@ -132,14 +132,6 @@ namespace MediaBrowser.Controller.SyncPlay
         bool IsBuffering();
 
         /// <summary>
-        /// Marks that the session has sent a Ready/Buffer request during its current buffering period.
-        /// Used to tell apart a client still preparing playback for the first time from one that is
-        /// re-buffering after already having caught up once.
-        /// </summary>
-        /// <param name="session">The session.</param>
-        void MarkBufferingReported(SessionInfo session);
-
-        /// <summary>
         /// Sets the session's group wait state.
         /// </summary>
         /// <param name="session">The session.</param>
