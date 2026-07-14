@@ -27,6 +27,12 @@ namespace Emby.Server.Implementations.SyncPlay
     public class Group : IGroupStateContext
     {
         /// <summary>
+        /// The maximum time, in milliseconds, a reported ping is trusted before being treated as stale
+        /// and replaced with <see cref="DefaultPing"/> when computing <see cref="GetHighestPing"/>.
+        /// </summary>
+        private const long PingStaleAfterMs = 90000;
+
+        /// <summary>
         /// The logger.
         /// </summary>
         private readonly ILogger<Group> _logger;
@@ -439,6 +445,7 @@ namespace Emby.Server.Implementations.SyncPlay
             if (_participants.TryGetValue(session.Id, out GroupMember value))
             {
                 value.Ping = ping;
+                value.LastPingUpdate = DateTime.UtcNow;
             }
         }
 
@@ -446,9 +453,19 @@ namespace Emby.Server.Implementations.SyncPlay
         public long GetHighestPing()
         {
             long max = long.MinValue;
+            var now = DateTime.UtcNow;
             foreach (var session in _participants.Values)
             {
-                max = Math.Max(max, session.Ping);
+                var ping = session.Ping;
+
+                // Never-reported or stale pings are unreliable; fall back to the default.
+                if (!session.LastPingUpdate.HasValue
+                    || (now - session.LastPingUpdate.Value).TotalMilliseconds > PingStaleAfterMs)
+                {
+                    ping = DefaultPing;
+                }
+
+                max = Math.Max(max, ping);
             }
 
             return max;
