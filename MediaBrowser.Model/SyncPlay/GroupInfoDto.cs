@@ -16,43 +16,30 @@ namespace MediaBrowser.Model.SyncPlay
         /// <param name="state">The group state.</param>
         /// <param name="participants">The participants.</param>
         /// <param name="lastUpdatedAt">The date when this DTO has been created.</param>
-        public GroupInfoDto(Guid groupId, string groupName, GroupStateType state, IReadOnlyList<string> participants, DateTime lastUpdatedAt)
+        /// <param name="bufferingParticipants">The usernames of participants currently buffering and blocking the group.</param>
+        /// <param name="hostUsername">The username of the session that created the group.</param>
+        public GroupInfoDto(Guid groupId, string groupName, GroupStateType state, IReadOnlyList<string> participants, DateTime lastUpdatedAt, IReadOnlyList<string>? bufferingParticipants = null, string? hostUsername = null)
         {
             GroupId = groupId;
             GroupName = groupName;
             State = state;
             Participants = participants;
             LastUpdatedAt = lastUpdatedAt;
-        }
 
         /// <summary>
-        /// Gets the group identifier.
+        /// Gets the usernames of the participants that are currently buffering and blocking the group
+        /// from progressing, so clients can surface who is holding things up.
         /// </summary>
-        /// <value>The group identifier.</value>
-        public Guid GroupId { get; }
+        /// <value>The usernames of the participants currently buffering.</value>
+        public IReadOnlyList<string> BufferingParticipants { get; }
 
         /// <summary>
-        /// Gets the group name.
+        /// Gets the username of the session that created the group. This is set once at
+        /// group creation and never changes for the lifetime of the group, regardless of
+        /// participants joining or leaving, so clients can use it as a stable "who is host"
+        /// identity instead of deriving it from participant list ordering.
         /// </summary>
-        /// <value>The group name.</value>
-        public string GroupName { get; }
-
-        /// <summary>
-        /// Gets the group state.
-        /// </summary>
-        /// <value>The group state.</value>
-        public GroupStateType State { get; }
-
-        /// <summary>
-        /// Gets the participants.
-        /// </summary>
-        /// <value>The participants.</value>
-        public IReadOnlyList<string> Participants { get; }
-
-        /// <summary>
-        /// Gets the date when this DTO has been created.
-        /// </summary>
-        /// <value>The date when this DTO has been created.</value>
-        public DateTime LastUpdatedAt { get; }
+        /// <value>The host's username.</value>
+        public string HostUsername { get; }
     }
 }
