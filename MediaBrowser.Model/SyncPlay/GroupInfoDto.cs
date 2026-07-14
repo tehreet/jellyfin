@@ -58,8 +58,7 @@ namespace MediaBrowser.Model.SyncPlay
         public DateTime LastUpdatedAt { get; }
 
         /// <summary>
-        /// Gets the usernames of the participants that are currently buffering and blocking the group
-        /// from progressing, so clients can surface who is holding things up.
+        /// Gets the usernames of the participants that are currently buffering and blocking the group.
         /// </summary>
         /// <value>The usernames of the participants currently buffering.</value>
         public IReadOnlyList<string> BufferingParticipants { get; }

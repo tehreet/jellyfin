@@ -27,6 +27,18 @@ namespace Emby.Server.Implementations.SyncPlay
     public class Group : IGroupStateContext
     {
         /// <summary>
+        /// The maximum time, in milliseconds, a session that is still preparing playback for the first
+        /// time in the current buffering cycle (e.g. waiting on a transcode) can keep the group waiting.
+        /// </summary>
+        private const long PreparingTimeoutMs = 60000;
+
+        /// <summary>
+        /// The maximum time, in milliseconds, a session that has already caught up once in the current
+        /// cycle (and is therefore assumed to be re-buffering from network lag) can keep the group waiting.
+        /// </summary>
+        private const long NetworkLagTimeoutMs = 10000;
+
+        /// <summary>
         /// The logger.
         /// </summary>
         private readonly ILogger<Group> _logger;
@@ -61,22 +73,6 @@ namespace Emby.Server.Implementations.SyncPlay
         /// The internal group state.
         /// </summary>
         private IGroupState _state;
-
-        /// <summary>
-        /// The maximum time, in milliseconds, a session is allowed to keep the group waiting while it is
-        /// still preparing playback for the first time in the current buffering cycle (e.g. a transcode
-        /// that has not started yet). This is intentionally generous since it covers slow-start scenarios
-        /// rather than steady-state network drift.
-        /// </summary>
-        private const long PreparingTimeoutMs = 60000;
-
-        /// <summary>
-        /// The maximum time, in milliseconds, a session is allowed to keep the group waiting once it has
-        /// already reported ready/buffering at least once in the current cycle. A session re-buffering
-        /// after that point is assumed to be suffering from network drift rather than a slow start, so a
-        /// much tighter timeout applies.
-        /// </summary>
-        private const long NetworkLagTimeoutMs = 10000;
 
         /// <summary>
         /// Initializes a new instance of the <see cref="Group" /> class.
@@ -481,13 +477,14 @@ namespace Emby.Server.Implementations.SyncPlay
                     if (!value.IsBuffering)
                     {
                         value.BufferingSince = DateTime.UtcNow;
-                        value.HasReportedSinceBuffering = false;
                     }
                 }
                 else
                 {
                     value.BufferingSince = null;
-                    value.HasReportedSinceBuffering = false;
+
+                    // Any further buffering this cycle is treated as network lag rather than a slow start.
+                    value.HasCaughtUpSinceReset = true;
                 }
 
                 value.IsBuffering = isBuffering;
@@ -499,27 +496,11 @@ namespace Emby.Server.Implementations.SyncPlay
         {
             foreach (var session in _participants.Values)
             {
-                if (isBuffering)
-                {
-                    session.BufferingSince = DateTime.UtcNow;
-                    session.HasReportedSinceBuffering = false;
-                }
-                else
-                {
-                    session.BufferingSince = null;
-                    session.HasReportedSinceBuffering = false;
-                }
+                session.BufferingSince = isBuffering ? DateTime.UtcNow : null;
 
+                // A group-wide reset (e.g. seek, playlist change) starts a new cycle for everyone.
+                session.HasCaughtUpSinceReset = false;
                 session.IsBuffering = isBuffering;
-            }
-        }
-
-        /// <inheritdoc />
-        public void MarkBufferingReported(SessionInfo session)
-        {
-            if (_participants.TryGetValue(session.Id, out GroupMember value))
-            {
-                value.HasReportedSinceBuffering = true;
             }
         }
 
@@ -536,7 +517,7 @@ namespace Emby.Server.Implementations.SyncPlay
 
                 if (session.BufferingSince.HasValue)
                 {
-                    var timeoutMs = session.HasReportedSinceBuffering ? NetworkLagTimeoutMs : PreparingTimeoutMs;
+                    var timeoutMs = session.HasCaughtUpSinceReset ? NetworkLagTimeoutMs : PreparingTimeoutMs;
                     var elapsedMs = (now - session.BufferingSince.Value).TotalMilliseconds;
                     if (elapsedMs > timeoutMs)
                     {
@@ -545,11 +526,11 @@ namespace Emby.Server.Implementations.SyncPlay
                             session.SessionId,
                             GroupId.ToString(),
                             timeoutMs,
-                            session.HasReportedSinceBuffering ? "network lag" : "still preparing");
+                            session.HasCaughtUpSinceReset ? "network lag" : "still preparing");
 
                         session.IsBuffering = false;
                         session.BufferingSince = null;
-                        session.HasReportedSinceBuffering = false;
+                        session.HasCaughtUpSinceReset = false;
                         continue;
                     }
                 }

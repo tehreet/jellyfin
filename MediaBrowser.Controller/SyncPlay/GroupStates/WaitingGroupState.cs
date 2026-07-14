@@ -331,10 +331,6 @@ namespace MediaBrowser.Controller.SyncPlay.GroupStates
                 InitialStateSet = true;
             }
 
-            // The session is actively communicating, so it is not stuck preparing playback
-            // (e.g. waiting on a slow transcode start); any further re-buffering is network drift.
-            context.MarkBufferingReported(session);
-
             // Make sure the client is playing the correct item.
             if (!request.PlaylistItemId.Equals(context.PlayQueue.GetPlayingItemPlaylistId()))
             {
@@ -408,10 +404,6 @@ namespace MediaBrowser.Controller.SyncPlay.GroupStates
                 InitialState = prevState;
                 InitialStateSet = true;
             }
-
-            // The session is actively communicating, so it is not stuck preparing playback
-            // (e.g. waiting on a slow transcode start); any further re-buffering is network drift.
-            context.MarkBufferingReported(session);
 
             // Make sure the client is playing the correct item.
             if (!request.PlaylistItemId.Equals(context.PlayQueue.GetPlayingItemPlaylistId()))
