@@ -331,9 +331,9 @@ namespace MediaBrowser.Controller.SyncPlay.GroupStates
                 InitialStateSet = true;
             }
 
-            // The session is actively communicating, so it is not stuck preparing playback
-            // (e.g. waiting on a slow transcode start); any further re-buffering is network drift.
-            context.MarkBufferingReported(session);
+            // Note: a BufferGroupRequest only ever indicates the session is (still) buffering,
+            // never that it has caught up, so it must not affect HasCaughtUpSinceReset /
+            // the applicable timeout. See Group.SetBuffering/SetAllBuffering.
 
             // Make sure the client is playing the correct item.
             if (!request.PlaylistItemId.Equals(context.PlayQueue.GetPlayingItemPlaylistId()))
@@ -409,9 +409,11 @@ namespace MediaBrowser.Controller.SyncPlay.GroupStates
                 InitialStateSet = true;
             }
 
-            // The session is actively communicating, so it is not stuck preparing playback
-            // (e.g. waiting on a slow transcode start); any further re-buffering is network drift.
-            context.MarkBufferingReported(session);
+            // Note: whether this ReadyGroupRequest indicates the session has genuinely caught
+            // up (and should therefore be considered no longer at risk of the tight
+            // NetworkLagTimeoutMs on its next stall) is determined below, per-branch, by
+            // whichever SetBuffering(session, ...) call actually reflects the outcome. See
+            // Group.SetBuffering/SetAllBuffering for how HasCaughtUpSinceReset is tracked.
 
             // Make sure the client is playing the correct item.
             if (!request.PlaylistItemId.Equals(context.PlayQueue.GetPlayingItemPlaylistId()))
