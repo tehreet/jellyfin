@@ -46,6 +46,12 @@ namespace MediaBrowser.Controller.SyncPlay
         public long Ping { get; set; }
 
         /// <summary>
+        /// Gets or sets the last time <see cref="Ping"/> was updated by the session.
+        /// </summary>
+        /// <value>The date of the last ping update, or <c>null</c> if never reported.</value>
+        public DateTime? LastPingUpdate { get; set; }
+
+        /// <summary>
         /// Gets or sets a value indicating whether this member is buffering.
         /// </summary>
         /// <value><c>true</c> if member is buffering; <c>false</c> otherwise.</value>
