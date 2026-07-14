@@ -137,6 +137,16 @@ namespace Emby.Server.Implementations.SyncPlay
         public string GroupName { get; private set; }
 
         /// <summary>
+        /// Gets the username of the session that created this group. Set once at group
+        /// creation time and never reassigned afterward, regardless of participants joining
+        /// or leaving. Unlike deriving "who is host" from participant/dictionary ordering
+        /// (which is unspecified and shifts once any entry is removed), this is a stable
+        /// identity for the lifetime of the group.
+        /// </summary>
+        /// <value>The host's username.</value>
+        public string HostUsername { get; private set; }
+
+        /// <summary>
         /// Gets the group identifier.
         /// </summary>
         /// <value>The group identifier.</value>
@@ -272,6 +282,7 @@ namespace Emby.Server.Implementations.SyncPlay
         public void CreateGroup(SessionInfo session, NewGroupRequest request, CancellationToken cancellationToken)
         {
             GroupName = request.GroupName;
+            HostUsername = session.UserName;
             AddSession(session);
 
             var sessionIsPlayingAnItem = session.FullNowPlayingItem is not null;
@@ -378,7 +389,7 @@ namespace Emby.Server.Implementations.SyncPlay
         {
             var participants = _participants.Values.Select(session => session.UserName).Distinct().ToList();
             var bufferingParticipants = GetBufferingParticipants();
-            return new GroupInfoDto(GroupId, GroupName, _state.Type, participants, DateTime.UtcNow, bufferingParticipants);
+            return new GroupInfoDto(GroupId, GroupName, _state.Type, participants, DateTime.UtcNow, bufferingParticipants, HostUsername);
         }
 
         /// <summary>
