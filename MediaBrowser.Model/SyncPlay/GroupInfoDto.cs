@@ -17,7 +17,7 @@ namespace MediaBrowser.Model.SyncPlay
         /// <param name="participants">The participants.</param>
         /// <param name="lastUpdatedAt">The date when this DTO has been created.</param>
         /// <param name="bufferingParticipants">The usernames of participants currently buffering and blocking the group.</param>
-        /// <param name="hostUsername">The username of the session that created the group.</param>
+        /// <param name="hostUsername">The username of the group's host.</param>
         public GroupInfoDto(Guid groupId, string groupName, GroupStateType state, IReadOnlyList<string> participants, DateTime lastUpdatedAt, IReadOnlyList<string>? bufferingParticipants = null, string? hostUsername = null)
         {
             GroupId = groupId;
@@ -67,10 +67,11 @@ namespace MediaBrowser.Model.SyncPlay
         public IReadOnlyList<string> BufferingParticipants { get; }
 
         /// <summary>
-        /// Gets the username of the session that created the group. This is set once at
-        /// group creation and never changes for the lifetime of the group, regardless of
-        /// participants joining or leaving, so clients can use it as a stable "who is host"
-        /// identity instead of deriving it from participant list ordering.
+        /// Gets the username of the group's host. Initially the user that created the group;
+        /// if the host leaves while other participants remain, the server promotes the
+        /// longest-standing remaining participant. This always identifies a current member
+        /// of the group, so clients can use it as a stable "who is host" identity instead of
+        /// deriving it from participant list ordering.
         /// </summary>
         /// <value>The host's username.</value>
         public string HostUsername { get; }
