@@ -25,6 +25,39 @@ namespace MediaBrowser.Model.SyncPlay
             State = state;
             Participants = participants;
             LastUpdatedAt = lastUpdatedAt;
+            BufferingParticipants = bufferingParticipants ?? Array.Empty<string>();
+            HostUsername = hostUsername ?? string.Empty;
+        }
+
+        /// <summary>
+        /// Gets the group identifier.
+        /// </summary>
+        /// <value>The group identifier.</value>
+        public Guid GroupId { get; }
+
+        /// <summary>
+        /// Gets the group name.
+        /// </summary>
+        /// <value>The group name.</value>
+        public string GroupName { get; }
+
+        /// <summary>
+        /// Gets the group state.
+        /// </summary>
+        /// <value>The group state.</value>
+        public GroupStateType State { get; }
+
+        /// <summary>
+        /// Gets the participants.
+        /// </summary>
+        /// <value>The participants.</value>
+        public IReadOnlyList<string> Participants { get; }
+
+        /// <summary>
+        /// Gets the date when this DTO has been created.
+        /// </summary>
+        /// <value>The date when this DTO has been created.</value>
+        public DateTime LastUpdatedAt { get; }
 
         /// <summary>
         /// Gets the usernames of the participants that are currently buffering and blocking the group
